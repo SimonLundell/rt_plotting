@@ -1,4 +1,0 @@
-/home/simon/rt_plotting/build/CMakeFiles/rebuild_cache.dir
-/home/simon/rt_plotting/build/CMakeFiles/edit_cache.dir
-/home/simon/rt_plotting/build/CMakeFiles/rt_plot.dir
-/home/simon/rt_plotting/build/CMakeFiles/objs.dir
