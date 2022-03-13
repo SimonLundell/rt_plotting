@@ -18,46 +18,72 @@
 #include "../resources/implot.h"
 
 struct ScrollingBuffer {
-    int MaxSize;
-    int Offset;
-    ImVector<ImVec2> Data;
-    ScrollingBuffer(int max_size = 2000) {
+    ScrollingBuffer(int max_size = 2000) 
+    {
         MaxSize = max_size;
         Offset  = 0;
         Data.reserve(MaxSize);
     }
-    void AddPoint(float x, float y) {
+    
+    void AddPoint(const float &x, const float& y) 
+    {
         if (Data.size() < MaxSize)
+        {
             Data.push_back(ImVec2(x,y));
-        else {
+        }
+        else 
+        {
             Data[Offset] = ImVec2(x,y);
             Offset =  (Offset + 1) % MaxSize;
         }
     }
-    void Erase() {
-        if (Data.size() > 0) {
+
+    void Erase() 
+    {
+        if (Data.size() > 0) 
+        {
             Data.shrink(0);
             Offset  = 0;
         }
     }
+
+    int MaxSize;
+    int Offset;
+    ImVector<ImVec2> Data;
 };
 
-// utility structure for realtime plot
-struct RollingBuffer {
-    float Span;
-    ImVector<ImVec2> Data;
-    RollingBuffer() {
+// Utility structure for realtime plot
+struct RollingBuffer 
+{
+    RollingBuffer() 
+    {
         Span = 10.0f;
         Data.reserve(2000);
     }
-    void AddPoint(float x, float y) {
+    
+    void AddPoint(const float& x, const float& y) 
+    {
         float xmod = fmodf(x, Span);
         if (!Data.empty() && xmod < Data.back().x)
+        {
             Data.shrink(0);
+        }
         Data.push_back(ImVec2(xmod, y));
     }
+    
+    float Span;
+    ImVector<ImVec2> Data;
 };
-void RealtimePlots() {
+
+enum PLOTTYPE
+{
+    SCROLLING = 0,
+    ROLLING,
+    UNKNOWN
+};
+
+void RealtimePlots(PLOTTYPE type) 
+{
     ImGui::BulletText("Move your mouse to change the data!");
     ImGui::BulletText("This example assumes 60 FPS. Higher FPS requires larger buffer size.");
     static ScrollingBuffer sdata1, sdata2;
@@ -70,29 +96,47 @@ void RealtimePlots() {
     sdata2.AddPoint(t, mouse.y * 0.0005f);
     rdata2.AddPoint(t, mouse.y * 0.0005f);
 
-    static float history = 10.0f;
+    static float history = 5.0f;
     ImGui::SliderFloat("History",&history,1,30,"%.1f s");
     rdata1.Span = history;
     rdata2.Span = history;
 
     static ImPlotAxisFlags flags = ImPlotAxisFlags_NoTickLabels;
-
-    if (ImPlot::BeginPlot("##Scrolling", ImVec2(-1,150))) {
-        ImPlot::SetupAxes(NULL, NULL, flags, flags);
-        ImPlot::SetupAxisLimits(ImAxis_X1,0, 30, ImGuiCond_Always);
-        ImPlot::SetupAxisLimits(ImAxis_Y1,0,1);
-        ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL,0.5f);
-        ImPlot::PlotShaded("Mouse Xss", &sdata1.Data[0].x, &sdata1.Data[0].y, sdata1.Data.size(), -INFINITY, sdata1.Offset, 2 * sizeof(float));
-        ImPlot::PlotLine("Mouse Y", &sdata2.Data[0].x, &sdata2.Data[0].y, sdata2.Data.size(), sdata2.Offset, 2*sizeof(float));
-        ImPlot::EndPlot();
-    }
-    if (ImPlot::BeginPlot("##Rolling", ImVec2(-1,150))) {
-        ImPlot::SetupAxes(NULL, NULL, flags, flags);
-        ImPlot::SetupAxisLimits(ImAxis_X1,t-history,30, ImGuiCond_Always);
-        ImPlot::SetupAxisLimits(ImAxis_Y1,0,1);
-        ImPlot::PlotLine("Mouse X", &rdata1.Data[0].x, &rdata1.Data[0].y, rdata1.Data.size(), 0, 2 * sizeof(float));
-        ImPlot::PlotLine("Mouse Y", &rdata2.Data[0].x, &rdata2.Data[0].y, rdata2.Data.size(), 0, 2 * sizeof(float));
-        ImPlot::EndPlot();
+    
+    switch(type)
+    {
+        case (PLOTTYPE::SCROLLING):
+        {
+            if (ImPlot::BeginPlot("##Scrolling", ImVec2(-1,150))) 
+            {
+                ImPlot::SetupAxes(NULL, NULL, flags, flags);
+                ImPlot::SetupAxisLimits(ImAxis_X1,0, 30, ImGuiCond_Always);
+                ImPlot::SetupAxisLimits(ImAxis_Y1,0,1);
+                ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL,0.5f);
+                ImPlot::PlotShaded("Mouse Xs", &sdata1.Data[0].x, &sdata1.Data[0].y, sdata1.Data.size(), -INFINITY, sdata1.Offset, 2 * sizeof(float));
+                ImPlot::PlotLine("Mouse Y", &sdata2.Data[0].x, &sdata2.Data[0].y, sdata2.Data.size(), sdata2.Offset, 2*sizeof(float));
+                ImPlot::EndPlot();
+            }
+            break;
+        }
+        case (PLOTTYPE::ROLLING):
+        {
+            if (ImPlot::BeginPlot("##Rolling", ImVec2(-1,150))) 
+            {
+                ImPlot::SetupAxes(NULL, NULL, flags, flags);
+                ImPlot::SetupAxisLimits(ImAxis_X1,0,history, ImGuiCond_Always);
+                ImPlot::SetupAxisLimits(ImAxis_Y1,0,1);
+                ImPlot::PlotLine("Mouse X", &rdata1.Data[0].x, &rdata1.Data[0].y, rdata1.Data.size(), 0, 2 * sizeof(float));
+                ImPlot::PlotLine("Mouse Y", &rdata2.Data[0].x, &rdata2.Data[0].y, rdata2.Data.size(), 0, 2 * sizeof(float));
+                ImPlot::EndPlot();
+            }
+            break;
+        }
+        default:
+        {
+            printf("No valid plot type given\n");
+            break;
+        }
     }
 }
 // Main code
@@ -212,7 +256,7 @@ int main(int, char**)
         ImGui::NewFrame();
 
         // My stuff
-        RealtimePlots();
+        RealtimePlots(PLOTTYPE::SCROLLING);
         
         // End of my stuff
         ImGui::Render();
