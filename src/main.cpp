@@ -185,19 +185,8 @@ int main(int, char**)
     //IM_ASSERT(font != NULL);
 
     // Our state
-    bool show_demo_window = true;
-    bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     
-    float x_data[1000];
-    float y_data[1000];
-    // Plotdata
-    for (size_t i = 0; i < 1000; ++i)
-    {
-        x_data[i] = i / 1000;
-        y_data[i] = i;
-    }
-
     // Main loop
     bool done = false;
     while (!done)
@@ -224,21 +213,8 @@ int main(int, char**)
 
         // My stuff
         RealtimePlots();
-        //ImGui::Begin("My Window");
-        //static float xs1[1001], ys1[1001];
-        //for (int i = 0; i < 1001; ++i) {
-        //    xs1[i] = i * 0.001f;
-        //    ys1[i] = static_cast<float>(ImGui::GetTime()) / 10;//0.5f + 0.5f * sinf(50 * (xs1[i] + (float)ImGui::GetTime() / 10));
-        //}
         
-        //ImGui::BulletText("Anti-aliasing can be enabled from the plot's context menu (see Help).");
-        //if (ImPlot::BeginPlot("Line Plot")) {
-        //    ImPlot::SetupAxes("x","f(x)");
-        //    ImPlot::PlotLine("sin(x)", xs1, ys1, 1001);
-        //    ImPlot::EndPlot();
-        //}
-        //ImGui::End();
-        // Rendering
+        // End of my stuff
         ImGui::Render();
         glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
         glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
