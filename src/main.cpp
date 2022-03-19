@@ -8,6 +8,7 @@
 #include "../resources/imgui_impl_opengl3.h"
 #include <stdio.h>
 #include <math.h>
+#include <string>
 #include "../resources/SDL2/SDL.h"
 #if defined(IMGUI_IMPL_OPENGL_ES2)
 #include <SDL_opengles2.h>
@@ -16,6 +17,25 @@
 #endif
 
 #include "../resources/implot.h"
+
+/*
+struct ScrollingPlot
+{
+    ScrollingPlot(flags,ImAxis_X1,ImGuiCond_Always,ImAxis_Y1,sdata1,sdata2);
+    {
+        if (ImPlot::BeginPlot("##Scrolling", ImVec2(-1,150))) 
+        {
+            ImPlot::SetupAxes(NULL, NULL, flags, flags);
+            ImPlot::SetupAxisLimits(ImAxis_X1,0, 30, ImGuiCond_Always);
+            ImPlot::SetupAxisLimits(ImAxis_Y1,0,1);
+            ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL,0.5f);
+            ImPlot::PlotShaded("Mouse X", &sdata1.Data[0].x, &sdata1.Data[0].y, sdata1.Data.size(), -INFINITY, sdata1.Offset, 2 * sizeof(float));
+            ImPlot::PlotLine("Mouse Y", &sdata2.Data[0].x, &sdata2.Data[0].y, sdata2.Data.size(), sdata2.Offset, 2*sizeof(float));
+            ImPlot::EndPlot();
+        }
+    }
+};
+*/
 
 struct ScrollingBuffer {
     ScrollingBuffer(int max_size = 2000) 
@@ -82,10 +102,10 @@ enum PLOTTYPE
     UNKNOWN
 };
 
-void RealtimePlots(PLOTTYPE type) 
+void RealtimePlots(PLOTTYPE type, uint8_t count) 
 {
-    ImGui::BulletText("Move your mouse to change the data!");
-    ImGui::BulletText("This example assumes 60 FPS. Higher FPS requires larger buffer size.");
+    //ImGui::BulletText("Move your mouse to change the data!");
+    //ImGui::BulletText("This example assumes 60 FPS. Higher FPS requires larger buffer size.");
     static ScrollingBuffer sdata1, sdata2;
     static RollingBuffer   rdata1, rdata2;
     ImVec2 mouse = ImGui::GetMousePos();
@@ -97,7 +117,7 @@ void RealtimePlots(PLOTTYPE type)
     rdata2.AddPoint(t, mouse.y * 0.0005f);
 
     static float history = 5.0f;
-    ImGui::SliderFloat("History",&history,1,30,"%.1f s");
+    //ImGui::SliderFloat("History",&history,1,30,"%.1f s");
     rdata1.Span = history;
     rdata2.Span = history;
 
@@ -107,15 +127,21 @@ void RealtimePlots(PLOTTYPE type)
     {
         case (PLOTTYPE::SCROLLING):
         {
-            if (ImPlot::BeginPlot("##Scrolling", ImVec2(-1,150))) 
+            uint8_t i = 0;
+            while (i < count)
             {
-                ImPlot::SetupAxes(NULL, NULL, flags, flags);
-                ImPlot::SetupAxisLimits(ImAxis_X1,0, 30, ImGuiCond_Always);
-                ImPlot::SetupAxisLimits(ImAxis_Y1,0,1);
-                ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL,0.5f);
-                ImPlot::PlotShaded("Mouse Xs", &sdata1.Data[0].x, &sdata1.Data[0].y, sdata1.Data.size(), -INFINITY, sdata1.Offset, 2 * sizeof(float));
-                ImPlot::PlotLine("Mouse Y", &sdata2.Data[0].x, &sdata2.Data[0].y, sdata2.Data.size(), sdata2.Offset, 2*sizeof(float));
-                ImPlot::EndPlot();
+                std::string id = "##Scrolling" + std::to_string(i);
+                if (ImPlot::BeginPlot(&id[0], ImVec2(-1,150))) 
+                {
+                    ImPlot::SetupAxes(NULL, NULL, flags, flags);
+                    ImPlot::SetupAxisLimits(ImAxis_X1,0, 30, ImGuiCond_Always);
+                    ImPlot::SetupAxisLimits(ImAxis_Y1,0,1);
+                    ImPlot::SetNextFillStyle(IMPLOT_AUTO_COL,0.5f);
+                    ImPlot::PlotShaded("Mouse X", &sdata1.Data[0].x, &sdata1.Data[0].y, sdata1.Data.size(), -INFINITY, sdata1.Offset, 2 * sizeof(float));
+                    ImPlot::PlotLine("Mouse Y", &sdata2.Data[0].x, &sdata2.Data[0].y, sdata2.Data.size(), sdata2.Offset, 2*sizeof(float));
+                    ImPlot::EndPlot();
+                }
+            ++i;
             }
             break;
         }
@@ -256,7 +282,7 @@ int main(int, char**)
         ImGui::NewFrame();
 
         // My stuff
-        RealtimePlots(PLOTTYPE::SCROLLING);
+        RealtimePlots(PLOTTYPE::SCROLLING,3);
         
         // End of my stuff
         ImGui::Render();
