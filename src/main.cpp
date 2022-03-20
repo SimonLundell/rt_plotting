@@ -102,7 +102,7 @@ enum PLOTTYPE
     UNKNOWN
 };
 
-void RealtimePlots(PLOTTYPE type, uint8_t count) 
+void RealtimePlots(PLOTTYPE type, uint8_t count, float frequency) 
 {
     //ImGui::BulletText("Move your mouse to change the data!");
     //ImGui::BulletText("This example assumes 60 FPS. Higher FPS requires larger buffer size.");
@@ -112,11 +112,24 @@ void RealtimePlots(PLOTTYPE type, uint8_t count)
     static RollingBuffer   rdata1, rdata2;
     ImVec2 mouse = ImGui::GetMousePos();
     static float t = 0;
-    t += ImGui::GetIO().DeltaTime;
-    sdata1.AddPoint(t, mouse.x * 0.0005f);
-    rdata1.AddPoint(t, mouse.x * 0.0005f);
-    sdata2.AddPoint(t, mouse.y * 0.0005f);
-    rdata2.AddPoint(t, mouse.y * 0.0005f);
+    static float delta_t = 0;
+    if (sdata1.Data.size() == 0 || rdata1.Data.size() == 0 || sdata2.Data.size() == 0 || rdata2.Data.size() == 0)
+    {
+        sdata1.AddPoint(t, mouse.x * 0.0005f);
+        rdata1.AddPoint(t, mouse.x * 0.0005f);
+        sdata2.AddPoint(t, mouse.y * 0.0005f);
+        rdata2.AddPoint(t, mouse.y * 0.0005f);
+    }
+    else if (delta_t > (1.0 / frequency))
+    {
+        t += ImGui::GetIO().DeltaTime;
+        sdata1.AddPoint(t, mouse.x * 0.0005f);
+        rdata1.AddPoint(t, mouse.x * 0.0005f);
+        sdata2.AddPoint(t, mouse.y * 0.0005f);
+        rdata2.AddPoint(t, mouse.y * 0.0005f);
+        delta_t = 0;
+    }
+    delta_t += ImGui::GetIO().DeltaTime;
 
     static float history = 5.0f;
     //ImGui::SliderFloat("History",&history,1,30,"%.1f s");
@@ -279,14 +292,6 @@ int main(int, char**)
                 done = true;
             if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window))
                 done = true;
-            if (event.type == SDL_MOUSEWHEEL)
-            {
-                plots++;
-            }
-            if (event.type == SDL_KEYDOWN)
-            {
-                plots--;
-            }
         }
 
         // Start the Dear ImGui frame
@@ -295,7 +300,11 @@ int main(int, char**)
         ImGui::NewFrame();
 
         // My stuff
-        RealtimePlots(PLOTTYPE::SCROLLING, plots);
+        if (ImGui::Button("Add plot", ImVec2(100,20))) plots++;
+        if (ImGui::Button("Remove plot", ImVec2(100,20))) plots--;
+
+        // Fixed x, number of plots, frequency (Hz)
+        RealtimePlots(PLOTTYPE::SCROLLING, plots, 40); 
         
         // End of my stuff
         ImGui::Render();
