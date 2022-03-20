@@ -106,6 +106,8 @@ void RealtimePlots(PLOTTYPE type, uint8_t count)
 {
     //ImGui::BulletText("Move your mouse to change the data!");
     //ImGui::BulletText("This example assumes 60 FPS. Higher FPS requires larger buffer size.");
+    SDL_Event event;
+    SDL_PollEvent(&event);
     static ScrollingBuffer sdata1, sdata2;
     static RollingBuffer   rdata1, rdata2;
     ImVec2 mouse = ImGui::GetMousePos();
@@ -130,8 +132,10 @@ void RealtimePlots(PLOTTYPE type, uint8_t count)
             uint8_t i = 0;
             while (i < count)
             {
+                // Unique ID for each plot in window
                 std::string id = "##Scrolling" + std::to_string(i);
-                if (ImPlot::BeginPlot(&id[0], ImVec2(-1,150))) 
+
+                if (ImPlot::BeginPlot(&id[0], ImVec2(-360,150))) 
                 {
                     ImPlot::SetupAxes(NULL, NULL, flags, flags);
                     ImPlot::SetupAxisLimits(ImAxis_X1,0, 30, ImGuiCond_Always);
@@ -259,6 +263,7 @@ int main(int, char**)
     
     // Main loop
     bool done = false;
+    uint8_t plots = 1;
     while (!done)
     {
         // Poll and handle events (inputs, window resize, etc.)
@@ -274,6 +279,14 @@ int main(int, char**)
                 done = true;
             if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window))
                 done = true;
+            if (event.type == SDL_MOUSEWHEEL)
+            {
+                plots++;
+            }
+            if (event.type == SDL_KEYDOWN)
+            {
+                plots--;
+            }
         }
 
         // Start the Dear ImGui frame
@@ -282,7 +295,7 @@ int main(int, char**)
         ImGui::NewFrame();
 
         // My stuff
-        RealtimePlots(PLOTTYPE::SCROLLING,3);
+        RealtimePlots(PLOTTYPE::SCROLLING, plots);
         
         // End of my stuff
         ImGui::Render();
